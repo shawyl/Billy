@@ -1,0 +1,6 @@
+There are three people: Alex, C, and Y.
+Pizza is split equally with everyone.
+2 Guinness are Alex's and 3 Guinness are C's.
+Fries are shared by Alex and Y.
+GST and service charge should be split proportionally by subtotal.
+

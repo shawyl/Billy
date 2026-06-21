@@ -1,0 +1,8 @@
+Pizza 24.00
+Guinness x5 50.00
+Fries 12.00
+
+Subtotal 86.00
+No GST or service charge shown on the receipt.
+Total 86.00
+
