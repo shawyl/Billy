@@ -50,14 +50,15 @@ Receipt detected
 
 I read the bill as:
 
-1. Pizza - $24.00
-2. Guinness x5 - $50.00
-3. Fries - $12.00
+1. Rice Bowl x2 - $24.00
+2. Salad x1 - $8.50
+3. Iced Tea x3 - $9.00
+4. Dessert x1 - $6.00
 
-Subtotal: $86.00
+Subtotal: $47.50
 GST: Not found
 Service charge: Not found
-Total: $86.00
+Total before GST/service: $47.50
 
 Please confirm if this looks correct.
 ```
@@ -71,12 +72,15 @@ You can also confirm and provide split rules in the same message:
 ```text
 Confirm
 
-3 Guinness on me, 6 on C, 5 Suntory Gin on Y
+Rice Bowls split between Alex and Jamie
+Salad on Morgan
+Iced Tea split equally
+Dessert shared by everyone
 ```
 
 For simple quantity ownership rules like this, Billy builds a deterministic split plan directly and validates the final calculation before replying.
 
-You can also send corrections such as `Pizza is 28 not 26`, `No GST`, or `Service charge is 10%, GST is 9%`. Billy updates the current state and sends a short refreshed confirmation instead of restarting the conversation.
+You can also send corrections such as `Salad is 9.50 not 8.50`, `No GST`, or `Service charge is 10%, GST is 9%`. Billy updates the current state and sends a short refreshed confirmation instead of restarting the conversation.
 
 ## GST And Service Charge Clarification
 
@@ -103,13 +107,13 @@ If the runs disagree, the bot returns a short clarification request. It does not
 When the bot asks for a clarification about similar items with different prices, the answer is resolved into a locked internal allocation before calculation. For example:
 
 ```text
-Alex: 2.5 HH Guinness, C: remaining HH Guinness + Guinness
+Alex: 2 regular Iced Tea, Jamie: remaining regular Iced Tea + large Iced Tea
 ```
 
-If the bill contains `HH Guinness x6` and `Guinness x1`, Billy resolves this deterministically as:
+If the bill contains `Iced Tea x3` and `Large Iced Tea x1`, Billy resolves this deterministically as:
 
-- `HH Guinness`: Alex `2.5`, C `3.5`
-- `Guinness`: C `1`
+- `Iced Tea`: Alex `2`, Jamie `1`
+- `Large Iced Tea`: Jamie `1`
 
 Locked allocations are calculated directly by Python instead of being reinterpreted by the LLM across five runs.
 
@@ -189,11 +193,20 @@ Optional:
 Manual bill:
 
 ```text
-Pizza 24
-Guinness x5 50
-Fries 12
-Subtotal 86
-Total 86
+2X Rice Bowl -> 12.00
+1X Salad -> 8.50
+3X Iced Tea -> 3.00
+1X Dessert -> 6.00
+
+People:
+Alex, Jamie, Morgan
+
+Split rules:
+Rice Bowls split between Alex and Jamie
+Salad on Morgan
+Iced Tea split equally
+Dessert shared by everyone
+Add 9% tax and 10% service charge
 ```
 
 After the bot shows the extracted bill and GST/service prompt:
@@ -205,29 +218,57 @@ No GST/service charge
 Then send the split:
 
 ```text
-There are three people: Alex, C, and Y.
-Pizza is split equally with everyone.
-2 Guinness are Alex's and 3 are C's.
-Fries are shared by Alex and Y.
+Alex and Jamie share the Rice Bowls.
+Morgan pays for the Salad.
+Iced Tea is split equally.
+Dessert is shared by Alex, Jamie, and Morgan.
 ```
 
 Manual shorthand with split instructions in the same message:
 
 ```text
-1X Battered Fish Bites -> 14.00
-1X Pizza -> 26.00
-6X HH Guinness -> 11.00
-2X Gin Tonic -> 12.00
-1X Guinness -> 14.00
+2X Rice Bowl -> 12.00
+1X Salad -> 8.50
+3X Iced Tea -> 3.00
+1X Dessert -> 6.00
 
-Me, C & Y
+Alex, Jamie, Morgan
 
-Battered fish bites and Pizza split equally among 3
-All Gin Tonic on Y
-2.5 Guinness on Me, rest on C
+Rice Bowls split between Alex and Jamie
+Salad on Morgan
+Iced Tea split equally
+Dessert shared by everyone
+Add 9% tax and 10% service charge
 ```
 
-For quantity-prefix lines such as `6X HH Guinness -> 11.00`, the amount is treated as the unit price by default, so the line total is `$66.00`. If a quantity-based rule spans similarly named items with different unit prices, the bot asks for clarification before calculating.
+For quantity-prefix lines such as `3X Iced Tea -> 3.00`, the amount is treated as the unit price by default, so the line total is `$9.00`. If a quantity-based rule spans similarly named items with different unit prices, the bot asks for clarification before calculating.
+
+Example final result:
+
+```text
+Bill split result
+
+Subtotal: $47.50
+Tax 9%: $4.28
+Service 10%: $4.75
+Total: $56.53
+
+Validation: 5/5 matched
+
+Alex: $20.23
+Jamie: $20.23
+Morgan: $16.07
+```
+
+Short copy-friendly result:
+
+```text
+Total: $56.53
+
+Alex: $20.23
+Jamie: $20.23
+Morgan: $16.07
+```
 
 Percentage charges are interpreted by their labels. `Add 10% GST and 9% service charge` means GST is `10%` and service charge is `9%`. Percentage GST and service charge are calculated from the subtotal using the current deterministic rule.
 
@@ -251,7 +292,7 @@ Useful commands:
 
 1. Send a clear receipt photo to the bot, or upload the receipt as an image document if Telegram compression hurts quality.
 2. Review the extracted bill in Telegram.
-3. Correct anything wrong, such as `Guinness should be x4, not x5`.
+3. Correct anything wrong, such as `Iced Tea should be x2, not x3`.
 4. Clarify GST/service charge if needed.
 5. Send split instructions.
 6. Wait for the five validation runs to agree.
